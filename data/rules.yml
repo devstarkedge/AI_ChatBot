@@ -1,13 +1,76 @@
 version: "3.1"
 
 rules:
+  # 🚨 Safety
+  - rule: block risky queries
+    steps:
+      - intent: risky_question
+      - action: action_smart_reply
 
-- rule: Say goodbye anytime the user says goodbye
-  steps:
-  - intent: goodbye
-  - action: utter_goodbye
+  # 🤖 Handle ALL conversation intents
+  - rule: greet
+    steps:
+      - intent: greet
+      - action: action_smart_reply
 
-- rule: Say 'I am a bot' anytime the user challenges
-  steps:
-  - intent: bot_challenge
-  - action: utter_iamabot
+  - rule: casual talk
+    steps:
+      - intent: casual_talk
+      - action: action_smart_reply
+
+  - rule: mood great
+    steps:
+      - intent: mood_great
+      - action: action_smart_reply
+
+  - rule: mood unhappy
+    steps:
+      - intent: mood_unhappy
+      - action: action_smart_reply
+
+  - rule: ask name
+    steps:
+      - intent: ask_name
+      - action: action_smart_reply
+
+  - rule: bot challenge
+    steps:
+      - intent: bot_challenge
+      - action: action_smart_reply
+
+  - rule: user check
+    steps:
+      - intent: user_check
+      - action: action_smart_reply
+
+  # 🔥 NEW INTENTS (VERY IMPORTANT)
+  - rule: ask personal
+    steps:
+      - intent: ask_personal
+      - action: action_smart_reply
+
+  - rule: ask opinion
+    steps:
+      - intent: ask_opinion
+      - action: action_smart_reply
+
+  - rule: continue conversation
+    steps:
+      - intent: continue_conversation
+      - action: action_smart_reply
+
+  - rule: ask help
+    steps:
+      - intent: ask_help
+      - action: action_smart_reply
+
+  - rule: goodbye
+    steps:
+      - intent: goodbye
+      - action: action_smart_reply
+
+  # 🔁 Fallback
+  - rule: fallback to AI
+    steps:
+      - intent: nlu_fallback
+      - action: action_smart_reply

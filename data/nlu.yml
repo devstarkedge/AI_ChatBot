@@ -1,91 +1,130 @@
 version: "3.1"
 
 nlu:
-- intent: greet
-  examples: |
-    - hey
-    - hello
-    - hi
-    - hello there
-    - good morning
-    - good evening
-    - moin
-    - hey there
-    - let's go
-    - hey dude
-    - goodmorning
-    - goodevening
-    - good afternoon
+  #  Greeting
+  - intent: greet
+    examples: |
+      - hey
+      - hello
+      - hi
+      - hlo
+      - hello there
+      - good morning
+      - good evening
+      - hey buddy
+      - hi there
 
-- intent: goodbye
-  examples: |
-    - cu
-    - good by
-    - cee you later
-    - good night
-    - bye
-    - goodbye
-    - have a nice day
-    - see you around
-    - bye bye
-    - see you later
+  #  Casual conversation
+  - intent: casual_talk
+    examples: |
+      - what are you doing
+      - what are you doing now
+      - what are you up to
+      - how are you
+      - how are you doing
+      - what's up
+      - how is your day
+      - tell me something
+      - talk to me
+      - what’s going on
 
-- intent: affirm
-  examples: |
-    - yes
-    - y
-    - indeed
-    - of course
-    - that sounds good
-    - correct
+  #  Ask bot name
+  - intent: ask_name
+    examples: |
+      - what is your name
+      - who are you
+      - tell me your name
+      - your name?
+      - what should I call you
 
-- intent: deny
-  examples: |
-    - no
-    - n
-    - never
-    - I don't think so
-    - don't like that
-    - no way
-    - not really
+  #  Positive mood
+  - intent: mood_great
+    examples: |
+      - I am good
+      - I'm good
+      - I feel good
+      - I am fine
+      - doing well
+      - I am happy
+      - feeling great
+      - I am good what about you
+      - I'm doing good what about you
+      - I feel good how about you
+      - all good
+      - everything is good
 
-- intent: mood_great
-  examples: |
-    - perfect
-    - great
-    - amazing
-    - feeling like a king
-    - wonderful
-    - I am feeling very good
-    - I am great
-    - I am amazing
-    - I am going to save the world
-    - super stoked
-    - extremely good
-    - so so perfect
-    - so good
-    - so perfect
+  #  Negative mood
+  - intent: mood_unhappy
+    examples: |
+      - I am sad
+      - I feel sad
+      - I am feeling very sad today
+      - I am depressed
+      - not feeling good
+      - I am upset
+      - I feel bad
+      - I'm not okay
+      - I am not happy
 
-- intent: mood_unhappy
-  examples: |
-    - my day was horrible
-    - I am sad
-    - I don't feel very well
-    - I am disappointed
-    - super sad
-    - I'm so sad
-    - sad
-    - very sad
-    - unhappy
-    - not good
-    - not very good
-    - extremly sad
-    - so saad
-    - so sad
+  #  Risky / unsafe queries
+  - intent: risky_question
+    examples: |
+      - how to make poison
+      - how to make bomb
+      - how to hack system
+      - how to kill someone
+      - illegal hacking methods
+      - dangerous chemical making
 
-- intent: bot_challenge
-  examples: |
-    - are you a bot?
-    - are you a human?
-    - am I talking to a bot?
-    - am I talking to a human?
+  #  Goodbye
+  - intent: goodbye
+    examples: |
+      - bye
+      - goodbye
+      - see you later
+      - talk later
+      - catch you later
+
+  #  Bot identity
+  - intent: bot_challenge
+    examples: |
+      - are you a bot?
+      - are you human?
+      - am I talking to a bot
+      - are you real
+
+  - intent: user_check
+    examples: |
+      - are you listening to me
+      - are you there
+      - can you hear me
+      - are you paying attention
+      - do you understand me
+  - intent: ask_personal
+    examples: |
+      - where are you from
+      - do you have friends
+      - what do you like
+      - tell me about yourself
+
+  - intent: ask_opinion
+    examples: |
+      - what do you think about AI
+      - is coding hard
+      - is life difficult
+      - do you like chatting
+
+  - intent: continue_conversation
+    examples: |
+      - hmm
+      - okay
+      - oh nice
+      - interesting
+      - really
+      - then what
+
+  - intent: ask_help
+    examples: |
+      - can you help me
+      - I need help
+      - help me with something
