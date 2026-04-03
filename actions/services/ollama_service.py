@@ -5,43 +5,38 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "phi3"
 
 
-def clean_response(response):
+def clean_response(response, allow_long=False):
 
-    # Remove unwanted system leakage
-    bad_patterns = [
-        "You are",
-        "Instruction",
-        "Assistant:",
-        "Bot:",
-        "User:",
-        "---",
-    ]
+    bad_patterns = ["You are", "Instruction", "Assistant:", "Bot:", "User:", "---"]
 
     for pattern in bad_patterns:
         if pattern in response:
             response = response.split(pattern)[0]
 
-    response = response.strip()
+    response = response.strip().replace("\n", " ")
 
-    #  Remove extra new lines
-    response = response.replace("\n", " ").strip()
+    #  Short mode
+    if not allow_long:
+        sentences = re.split(r'(?<=[.!?]) +', response)
+        if sentences:
+            response = sentences[0]
 
-    #  Extract first complete sentence
-    sentences = re.split(r'(?<=[.!?]) +', response)
-
-    if sentences and len(sentences[0].split()) > 2:
-        response = sentences[0]
-
-    # fallback if no punctuation
-    words = response.split()
-    if len(words) > 15:
-        response = " ".join(words[:15])
+        words = response.split()
+        if len(words) > 15:
+            response = " ".join(words[:15])
 
     return response.strip()
 
 
-def generate_response(prompt):
+def generate_response(prompt, user_text):
     try:
+        msg = user_text.lower()
+
+        #  Decide response length
+        allow_long = any(word in msg for word in [
+            "joke", "story", "explain", "detail", "tell me"
+        ])
+
         res = requests.post(
             OLLAMA_URL,
             json={
@@ -49,8 +44,8 @@ def generate_response(prompt):
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.6,   
-                    "num_predict": 35    
+                    "temperature": 0.6,
+                    "num_predict": 80 if allow_long else 35
                 }
             },
             timeout=30
@@ -61,10 +56,10 @@ def generate_response(prompt):
 
         response = data.get("response", "").strip()
 
-        #  clean response
-        response = clean_response(response)
+        #  Clean response
+        response = clean_response(response, allow_long)
 
-        # Reject bad outputs
+        #  Reject garbage output
         if (
             not response
             or len(response) < 3

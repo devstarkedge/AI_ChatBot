@@ -2,7 +2,7 @@ from typing import Text, Dict, Any, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 import random
-import os
+# import os
 from dotenv import load_dotenv
 
 #  AI services
@@ -169,7 +169,7 @@ class ActionSmartReply(Action):
                 ai_reply = "hmm interesting 👀 tell me more"
             else:
                 prompt = build_prompt(sender_id, user_text)
-                ai_reply = generate_response(prompt)
+                ai_reply = generate_response(prompt, user_text)
 
         #  MEMORY SAVE
         add_to_memory(sender_id, user_text, ai_reply)

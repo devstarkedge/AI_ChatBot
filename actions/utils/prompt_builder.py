@@ -3,30 +3,33 @@ from .memory_store import get_memory
 def build_prompt(user_id, message):
     history = get_memory(user_id)
 
-    system_prompt = """
-You are a chill, casual chatbot (like a friend).
+    msg = message.lower()
 
-STRICT RULES:
-- Max 1 sentence reply
-- Max 12 words
-- No lists
-- No explanations
-- No advice unless asked
-- No formal tone
-- No "how can I help you"
-- No "as an AI"
-- No paragraphs
-- Talk like WhatsApp chat
+    #  Decide response style
+    if any(word in msg for word in ["joke", "story", "explain", "detail", "tell me about"]):
+        style = "long"
+    else:
+        style = "short"
 
-Examples:
-User: I am hungry
-Bot: go eat something tasty 😄
+    #  Dynamic system prompt
+    if style == "short":
+        system_prompt = """
+You are a chill chatbot.
 
-User: I am sad
-Bot: ohh what happened?
+Rules:
+- Max 1 sentence
+- Max 10 words
+- Casual tone
+- No explanation
+"""
+    else:
+        system_prompt = """
+You are a friendly chatbot.
 
-User: hi
-Bot: hey 😄
+Rules:
+- Give slightly detailed response (2-4 lines)
+- Still casual tone
+- No AI-like language
 """
 
     prompt = system_prompt + "\n"
