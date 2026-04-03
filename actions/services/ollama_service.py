@@ -1,18 +1,41 @@
 import requests
+import re
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "tinyllama"
+MODEL = "phi3"
 
 
 def clean_response(response):
-    # remove system leakage
-    if "You are" in response:
-        response = response.split("User:")[-1]
 
-    # remove tags
-    for tag in ["User:", "Assistant:", "Bot:", "BoT:"]:
-        if tag in response:
-            response = response.split(tag)[-1]
+    # Remove unwanted system leakage
+    bad_patterns = [
+        "You are",
+        "Instruction",
+        "Assistant:",
+        "Bot:",
+        "User:",
+        "---",
+    ]
+
+    for pattern in bad_patterns:
+        if pattern in response:
+            response = response.split(pattern)[0]
+
+    response = response.strip()
+
+    #  Remove extra new lines
+    response = response.replace("\n", " ").strip()
+
+    #  Extract first complete sentence
+    sentences = re.split(r'(?<=[.!?]) +', response)
+
+    if sentences and len(sentences[0].split()) > 2:
+        response = sentences[0]
+
+    # fallback if no punctuation
+    words = response.split()
+    if len(words) > 15:
+        response = " ".join(words[:15])
 
     return response.strip()
 
@@ -26,8 +49,8 @@ def generate_response(prompt):
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.4,
-                    "num_predict": 80
+                    "temperature": 0.6,   
+                    "num_predict": 35    
                 }
             },
             timeout=30
@@ -38,17 +61,23 @@ def generate_response(prompt):
 
         response = data.get("response", "").strip()
 
-        #  clean properly
+        #  clean response
         response = clean_response(response)
 
-        if not response or len(response) < 5:
-            return "I didn't understand that clearly. Can you try again?"
+        # Reject bad outputs
+        if (
+            not response
+            or len(response) < 3
+            or "You are" in response
+            or "Instruction" in response
+        ):
+            return "hmm 😄"
 
         return response
 
     except requests.exceptions.Timeout:
-        return "I'm a bit slow right now 😅 try again."
+        return "thoda slow ho gaya 😅 try again"
 
     except Exception as e:
         print("[OLLAMA ERROR]", e)
-        return "Something went wrong while generating response."
+        return "something went wrong 😅"

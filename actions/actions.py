@@ -6,9 +6,9 @@ import os
 from dotenv import load_dotenv
 
 #  AI services
-from services.ollama_service import generate_response
-from utils.prompt_builder import build_prompt
-from utils.memory_store import add_to_memory, get_memory
+from .services.ollama_service import generate_response
+from .utils.prompt_builder import build_prompt
+from .utils.memory_store import add_to_memory, get_memory
 
 load_dotenv()
 
@@ -44,7 +44,7 @@ class ActionSmartReply(Action):
         if any(word in text for word in ["code", "programming", "react", "node", "js"]):
             topic = "coding"
 
-        elif any(word in text for word in ["hungry", "food", "eat", "khana", "bhook"]):
+        elif any(word in text for word in ["hungry", "hugry", "food", "eat", "khana", "bhook"]):
             topic = "food"
 
         elif any(word in text for word in ["gym", "fitness", "workout", "exercise"]):
