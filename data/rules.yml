@@ -1,13 +1,13 @@
 version: "3.1"
 
 rules:
-  # 🚨 Safety
+  #  Safety
   - rule: block risky queries
     steps:
       - intent: risky_question
       - action: action_smart_reply
 
-  # 🤖 Handle ALL conversation intents
+  #  Handle ALL conversation intents
   - rule: greet
     steps:
       - intent: greet
@@ -43,7 +43,6 @@ rules:
       - intent: user_check
       - action: action_smart_reply
 
-  # 🔥 NEW INTENTS (VERY IMPORTANT)
   - rule: ask personal
     steps:
       - intent: ask_personal
@@ -69,7 +68,7 @@ rules:
       - intent: goodbye
       - action: action_smart_reply
 
-  # 🔁 Fallback
+  #  Fallback
   - rule: fallback to AI
     steps:
       - intent: nlu_fallback
