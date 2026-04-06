@@ -2,181 +2,107 @@ from typing import Text, Dict, Any, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 import random
-# import os
-from dotenv import load_dotenv
+import asyncio
 
-#  AI services
+# Custom modules
 from .services.ollama_service import generate_response
 from .utils.prompt_builder import build_prompt
-from .utils.memory_store import add_to_memory, get_memory
-
-load_dotenv()
-
-USE_FAKE_AI = False  
+from .utils.memory_store import add_to_memory
 
 
 class ActionSmartReply(Action):
+    """
+    Custom Rasa action to generate AI-based smart replies
+    using Ollama LLM with memory + prompt engineering.
+    """
 
     def name(self) -> Text:
+        """
+        Unique action name (must match domain.yml)
+        """
         return "action_smart_reply"
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+    async def simulate_typing_delay(self, text: str):
+        """
+        Simulates human-like typing delay based on message length
+        """
+        words = len(text.split())
 
-        user_text = tracker.latest_message.get("text", "")
-        intent = tracker.latest_message.get("intent", {}).get("name")
-        sender_id = tracker.sender_id
+        # Short replies - quick response
+        if words <= 3:
+            await asyncio.sleep(0.8)
 
-        text = user_text.lower().strip()
+        # Medium replies - moderate delay
+        elif words <= 10:
+            await asyncio.sleep(1.5)
 
-        #  Safety
-        if intent == "risky_question":
-            dispatcher.utter_message(text="I can’t help with that 😅")
+        # Long replies - longer delay
+        else:
+            await asyncio.sleep(2.0)
+
+    async def run(
+        self,
+        dispatcher: CollectingDispatcher,
+        tracker: Tracker,
+        domain: Dict[Text, Any]
+    ) -> List[Dict[Text, Any]]:
+        """
+        Main execution function triggered by Rasa
+        """
+
+        try:
+            # Get latest user message
+            user_text = tracker.latest_message.get("text", "").strip()
+
+            # Unique user/session ID
+            sender_id = tracker.sender_id
+
+            # Ignore empty input
+            if not user_text:
+                return []
+
+            # Build structured prompt (context + memory + user input)
+            prompt = build_prompt(sender_id, user_text)
+
+            # Generate AI response using Ollama
+            ai_reply = await generate_response(prompt, user_text)
+
+            # Fallback if AI fails or returns empty
+            if not ai_reply:
+                ai_reply = random.choice([
+                    "hmm 👀",
+                    "tell me more 😄",
+                    "interesting 👀"
+                ])
+
+            # Fetch last bot messages to avoid repetition
+            last_bot_messages = [
+                e.get("text") for e in tracker.events
+                if e.get("event") == "bot"
+            ]
+
+            # Prevent duplicate responses (last 2 messages)
+            if ai_reply in last_bot_messages[-2:]:
+                return []
+
+            # Simulate typing delay for better UX
+            await self.simulate_typing_delay(ai_reply)
+
+            # Store conversation in memory (for context awareness)
+            add_to_memory(sender_id, user_text, ai_reply)
+
+            # Send final response to user
+            dispatcher.utter_message(text=ai_reply)
+
             return []
 
-        #  Tone variation
-        tone_prefix = random.choice(["", "", "hmm… "])
+        except Exception as e:
+            # Log error for debugging
+            print("[ACTION ERROR]", e)
 
-        #  SMART TOPIC DETECTION
-        topic = None
+            # Graceful fallback message
+            dispatcher.utter_message(
+                text="something went wrong 😅"
+            )
 
-        if any(word in text for word in ["code", "programming", "react", "node", "js"]):
-            topic = "coding"
-
-        elif any(word in text for word in ["hungry", "hugry", "food", "eat", "khana", "bhook"]):
-            topic = "food"
-
-        elif any(word in text for word in ["gym", "fitness", "workout", "exercise"]):
-            topic = "fitness"
-
-        elif intent == "mood_unhappy":
-            topic = "emotion"
-
-        elif "life" in text:
-            topic = "life"
-
-        #  QUICK HUMAN-LIKE REPLIES
-        if text in ["nothing", "nothing much", "nm", "kuch nahi"]:
-            ai_reply = random.choice([
-                "haha same 😄",
-                "just chilling huh 😄",
-                "relaxed day 👀"
-            ])
-
-        elif "how are you" in text:
-            ai_reply = random.choice([
-                "I’m good 😄 what about you?",
-                "doing well! what’s up?",
-                "pretty good 👀 how’s your day?"
-            ])
-
-        elif text in ["yes", "yeah", "yup"]:
-            ai_reply = random.choice([
-                "nice 👍",
-                "got it 😄",
-                "okay cool"
-            ])
-
-        elif text in ["no", "nope"]:
-            ai_reply = random.choice([
-                "alright 😄",
-                "no worries",
-                "okay 👍"
-            ])
-
-        #  FOOD / HUNGER LOGIC
-        elif topic == "food":
-            ai_reply = random.choice([
-                "you should grab something tasty 😄 maybe pizza, burger or something healthy?",
-                "bhook lagi hai? 😄 try something light or your favorite food",
-                "go eat something 😄 food makes everything better"
-            ])
-
-        #  FITNESS LOGIC
-        elif topic == "fitness":
-            ai_reply = random.choice([
-                "fitness is great 🔥 even a small workout helps",
-                "you into gym? 💪 consistency is key",
-                "start with simple exercises 😄 don't overthink"
-            ])
-
-        #  INTENT BASED
-        elif intent == "greet":
-            ai_reply = random.choice([
-                "Hey! 😊",
-                "Hi 👀",
-                "Hello 😄"
-            ])
-
-        elif intent == "casual_talk":
-            ai_reply = random.choice([
-                "Just chilling 😄 what about you?",
-                "Talking to you 😎",
-                "Nothing much… what’s going on?"
-            ])
-
-        elif intent == "ask_name":
-            ai_reply = "I’m your AI buddy 😄"
-
-        elif intent == "ask_help":
-            ai_reply = "Of course 👍 what do you need help with?"
-
-        elif intent == "ask_personal":
-            ai_reply = random.choice([
-                "I enjoy good conversations 😄",
-                "I’m just here to chat and vibe"
-            ])
-
-        elif intent == "ask_opinion":
-            ai_reply = random.choice([
-                "Hmm… depends 🤔 what do you think?",
-                "That’s interesting… I’d say it varies"
-            ])
-
-        elif intent == "mood_great":
-            ai_reply = random.choice([
-                "That’s nice 😄",
-                "love that 🔥",
-                "good to hear that"
-            ])
-
-        elif intent == "mood_unhappy":
-            ai_reply = random.choice([
-                "That sounds tough 😔 wanna talk?",
-                "I get that… I’m here"
-            ])
-
-        elif intent == "continue_conversation":
-            ai_reply = random.choice([
-                "yeah?",
-                "hmm 👀",
-                "go on…"
-            ])
-
-        elif intent == "bot_challenge":
-            ai_reply = "maybe 😄 but I feel real enough right?"
-
-        elif intent == "user_check":
-            ai_reply = "yeah I’m here 👀"
-
-        elif intent == "goodbye":
-            ai_reply = "alright 🙂 catch you later"
-
-        #  AI FALLBACK 
-        else:
-            if USE_FAKE_AI:
-                ai_reply = "hmm interesting 👀 tell me more"
-            else:
-                prompt = build_prompt(sender_id, user_text)
-                ai_reply = generate_response(prompt, user_text)
-
-        #  MEMORY SAVE
-        add_to_memory(sender_id, user_text, ai_reply)
-
-        #  Tone apply
-        ai_reply = tone_prefix + ai_reply
-
-        dispatcher.utter_message(text=ai_reply)
-
-        return []
+            return []
